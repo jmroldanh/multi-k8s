@@ -1,37 +1,42 @@
 sudo: required
 services:
-   - docker
+  - docker
 
 before_install:
-   - docker build -t jmroldanh/react-test -f ./client/Dockerfile.dev ./client
+  - curl https://sdk.cloud.google.com/ | bash > /dev/null;
+  - source $HOME/google-cloud-sdk/path.bash.inc
+  - gcloud components update kubectl
+  - gcloud auth activate-service-account --key-file service-account.json
+
+  - docker build -t jmroldanh/react-test -f ./client/Dockerfile.dev ./client
 
 script:
-   - docker run -e CI=true jmroldanh/react-test npm run test
+  - docker run -e CI=true jmroldanh/react-test npm run test
 
 # Build producion images
 after_success:
-   - docker build -t jmroldanh/multi-client ./client
-   - docker build -t jmroldanh/multi-nginx  ./nginx
-   - docker build -t jmroldanh/multi-server ./server
-   - docker build -t jmroldanh/multi-worker ./worker
+  - docker build -t jmroldanh/multi-client ./client
+  - docker build -t jmroldanh/multi-nginx  ./nginx
+  - docker build -t jmroldanh/multi-server ./server
+  - docker build -t jmroldanh/multi-worker ./worker
 
 # Log in to Docker Hub
-   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
 
 # Push images to Docker Hub
-   - docker push jmroldanh/multi-client
-   - docker push jmroldanh/multi-nginx
-   - docker push jmroldanh/multi-server
-   - docker push jmroldanh/multi-worker
+  - docker push jmroldanh/multi-client
+  - docker push jmroldanh/multi-nginx
+  - docker push jmroldanh/multi-server
+  - docker push jmroldanh/multi-worker
 
 deploy:
-   provider: elasticbeanstalk
-   region: "eu-west-3"
-   app: "multi-docker"
-   env: "MultiDocker-env"
-   bucket_name: "elasticbeanstalk-eu-west-3-084485860971"
-   bucket_path: "docker-multi"
-   on:
-      branch: master
-   access_key_id: $AWS_ACCESS_KEY
-   secret_access_key: $AWS_SECRET_KEY
+  provider: elasticbeanstalk
+  region: "eu-west-3"
+  app: "multi-docker"
+  env: "MultiDocker-env"
+  bucket_name: "elasticbeanstalk-eu-west-3-084485860971"
+  bucket_path: "docker-multi"
+  on:
+    branch: master
+  access_key_id: $AWS_ACCESS_KEY
+  secret_access_key: $AWS_SECRET_KEY
