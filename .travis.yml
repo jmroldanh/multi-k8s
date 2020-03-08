@@ -8,6 +8,9 @@ before_install:
   - source $HOME/google-cloud-sdk/path.bash.inc
   - gcloud components update kubectl
   - gcloud auth activate-service-account --key-file multi-k8s-270419-b228c81a7f97.json
+  - gcloud config set project multi-k8s-270419
+  - gcloud config set compute/zone europe-west3-c
+  - gcloud container clusters get-credentials multi-cluster
 
   - docker build -t jmroldanh/react-test -f ./client/Dockerfile.dev ./client
 
